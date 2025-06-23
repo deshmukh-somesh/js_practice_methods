@@ -1,3 +1,7 @@
+const str = "hello";
+const reversed = str.split('').reverse().join('');
+console.log(reversed); // "olleh"
+
 // ===== STRING MANIPULATION =====
 
 // 1. Check if a string is a palindrome
