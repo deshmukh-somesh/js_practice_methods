@@ -1,0 +1,350 @@
+# Higher-Order Functions vs First-Class Functions
+
+## What are First-Class Functions?
+
+Functions that can be treated like any other value in the programming language. You can:
+
+- ✅ Assign them to variables
+- ✅ Pass them as arguments to other functions
+- ✅ Return them from functions
+- ✅ Store them in data structures (arrays, objects)
+
+### Examples of First-Class Functions
+
+```javascript
+// 1. Assigning function to variable
+const greet = function(name) {
+    return `Hello, ${name}!`;
+};
+
+// 2. Storing functions in arrays
+const operations = [
+    function(a, b) { return a + b; },
+    function(a, b) { return a - b; },
+    function(a, b) { return a * b; }
+];
+
+// 3. Storing functions in objects
+const calculator = {
+    add: function(a, b) { return a + b; },
+    subtract: function(a, b) { return a - b; }
+};
+
+// 4. Passing function as argument
+function callTwice(fn, value) {
+    fn(value);
+    fn(value);
+}
+
+callTwice(console.log, "Hi there!"); // Prints "Hi there!" twice
+```
+
+---
+
+## What are Higher-Order Functions?
+
+Functions that either:
+1. **Take other functions as parameters**, OR
+2. **Return functions as their result**
+
+### Type 1: Functions that take other functions as parameters
+
+```javascript
+// Built-in higher-order functions
+const numbers = [1, 2, 3, 4, 5];
+
+// map() - transforms each element
+const doubled = numbers.map(x => x * 2);
+console.log(doubled); // [2, 4, 6, 8, 10]
+
+// filter() - selects elements based on condition
+const evens = numbers.filter(x => x % 2 === 0);
+console.log(evens); // [2, 4]
+
+// reduce() - combines elements into single value
+const sum = numbers.reduce((acc, curr) => acc + curr, 0);
+console.log(sum); // 15
+
+// forEach() - executes function for each element
+numbers.forEach(num => console.log(num));
+
+// Custom higher-order function
+function processArray(array, processor) {
+    const result = [];
+    for (let item of array) {
+        result.push(processor(item));
+    }
+    return result;
+}
+
+const squares = processArray([1, 2, 3], x => x * x);
+console.log(squares); // [1, 4, 9]
+```
+
+### Type 2: Functions that return other functions
+
+```javascript
+// Function factory
+function createMultiplier(factor) {
+    return function(number) {
+        return number * factor;
+    };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(5)); // 10
+console.log(triple(5)); // 15
+
+// Function with closure
+function createCounter() {
+    let count = 0;
+    return function() {
+        count++;
+        return count;
+    };
+}
+
+const counter1 = createCounter();
+const counter2 = createCounter();
+
+console.log(counter1()); // 1
+console.log(counter1()); // 2
+console.log(counter2()); // 1 (independent counter)
+
+// Partial application
+function add(a, b, c) {
+    return a + b + c;
+}
+
+function partial(fn, ...args1) {
+    return function(...args2) {
+        return fn(...args1, ...args2);
+    };
+}
+
+const add5 = partial(add, 5);
+console.log(add5(3, 2)); // 10 (5 + 3 + 2)
+```
+
+---
+
+## Real-World Examples
+
+### Event Handling (Higher-Order Functions)
+
+```javascript
+// addEventListener is a higher-order function
+button.addEventListener('click', function() {
+    console.log('Button clicked!');
+});
+
+// setTimeout is a higher-order function
+setTimeout(() => {
+    console.log("This runs after 1 second");
+}, 1000);
+
+// Promise.then is a higher-order function
+fetch('/api/data')
+    .then(response => response.json())
+    .then(data => console.log(data));
+```
+
+### Function Composition
+
+```javascript
+// Utility functions
+const add = (a, b) => a + b;
+const multiply = (a, b) => a * b;
+const square = x => x * x;
+
+// Higher-order function for composition
+function compose(f, g) {
+    return function(x) {
+        return f(g(x));
+    };
+}
+
+const addThenSquare = compose(square, x => x + 2);
+console.log(addThenSquare(3)); // 25 ((3 + 2)² = 25)
+
+// Multiple function composition
+function pipe(...functions) {
+    return function(value) {
+        return functions.reduce((acc, fn) => fn(acc), value);
+    };
+}
+
+const process = pipe(
+    x => x + 1,    // add 1
+    x => x * 2,    // multiply by 2
+    x => x - 3     // subtract 3
+);
+
+console.log(process(5)); // 9 ((5 + 1) * 2 - 3 = 9)
+```
+
+### Decorators/Middleware Pattern
+
+```javascript
+// Logging decorator
+function withLogging(fn) {
+    return function(...args) {
+        console.log(`Calling ${fn.name} with arguments:`, args);
+        const result = fn(...args);
+        console.log(`${fn.name} returned:`, result);
+        return result;
+    };
+}
+
+// Timing decorator
+function withTiming(fn) {
+    return function(...args) {
+        console.time(fn.name);
+        const result = fn(...args);
+        console.timeEnd(fn.name);
+        return result;
+    };
+}
+
+// Original function
+function calculateSum(a, b) {
+    return a + b;
+}
+
+// Enhanced functions
+const loggedSum = withLogging(calculateSum);
+const timedSum = withTiming(calculateSum);
+
+loggedSum(5, 3);
+// Output:
+// Calling calculateSum with arguments: [5, 3]
+// calculateSum returned: 8
+
+timedSum(10, 20);
+// Output:
+// calculateSum: 0.123ms
+```
+
+---
+
+## Advanced Patterns
+
+### Currying
+
+```javascript
+// Regular function
+function add(a, b, c) {
+    return a + b + c;
+}
+
+// Curried version
+function curriedAdd(a) {
+    return function(b) {
+        return function(c) {
+            return a + b + c;
+        };
+    };
+}
+
+// Usage
+const add5 = curriedAdd(5);
+const add5And3 = add5(3);
+const result = add5And3(2); // 10
+
+// Or chain them
+const result2 = curriedAdd(1)(2)(3); // 6
+
+// Generic curry function
+function curry(fn) {
+    return function curried(...args) {
+        if (args.length >= fn.length) {
+            return fn.apply(this, args);
+        } else {
+            return function(...args2) {
+                return curried.apply(this, args.concat(args2));
+            };
+        }
+    };
+}
+
+const curriedMultiply = curry((a, b, c) => a * b * c);
+console.log(curriedMultiply(2)(3)(4)); // 24
+```
+
+### Memoization
+
+```javascript
+function memoize(fn) {
+    const cache = new Map();
+    
+    return function(...args) {
+        const key = JSON.stringify(args);
+        
+        if (cache.has(key)) {
+            console.log('Cache hit!');
+            return cache.get(key);
+        }
+        
+        console.log('Computing...');
+        const result = fn.apply(this, args);
+        cache.set(key, result);
+        return result;
+    };
+}
+
+// Expensive function
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+const memoizedFib = memoize(fibonacci);
+console.log(memoizedFib(40)); // Takes time first call
+console.log(memoizedFib(40)); // Instant second call
+```
+
+---
+
+## Key Differences Summary
+
+| Aspect | First-Class Functions | Higher-Order Functions |
+|--------|----------------------|------------------------|
+| **Definition** | Functions treated as values | Functions that operate on other functions |
+| **Capability** | Can be assigned, passed, returned | Takes functions as params OR returns functions |
+| **Examples** | `const fn = function() {}` | `array.map()`, `setTimeout()` |
+| **Relationship** | Enables higher-order functions | Built using first-class functions |
+
+## Why This Matters
+
+1. **Functional Programming**: These concepts are fundamental to functional programming paradigms
+2. **Code Reusability**: Create more generic, reusable code
+3. **Abstraction**: Hide complex logic behind simple interfaces
+4. **Composition**: Build complex operations from simple functions
+5. **Modern JavaScript**: Essential for understanding modern JavaScript patterns and libraries
+
+---
+
+## Practice Exercises
+
+Try implementing these higher-order functions:
+
+```javascript
+// 1. Create a function that takes an array and a test function
+function findFirst(array, testFn) {
+    // Return first element that passes the test
+}
+
+// 2. Create a debounce function
+function debounce(fn, delay) {
+    // Return a function that delays execution
+}
+
+// 3. Create a retry function
+function retry(fn, maxAttempts) {
+    // Return a function that retries on failure
+}
+```
+
+These concepts form the foundation for understanding modern JavaScript frameworks, functional programming, and advanced programming patterns!
